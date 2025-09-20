@@ -1,38 +1,26 @@
-import os
-
 from pymongo import MongoClient
 from chromadb import HttpClient
 from qdrant_client import QdrantClient
-from supabase import create_client, Client
-from dotenv import load_dotenv
 from qdrant_client import models as qdrant_models
+import os
+from dotenv import load_dotenv
+
 load_dotenv()
-
-print(os.getenv("SUPABASE_URL"))
-
 class VectorDatabase:
     def __init__(self, db_type):
         self.db_type = db_type
 
-        if db_type == "supabase":
-            url: str = os.environ.get("SUPABASE_URL")
-            key: str = os.environ.get("SUPABASE_KEY")
-            supabase: Client = create_client(
-                supabase_url=url,
-                supabase_key=key
-                )
-            self.client = supabase
-
-            self.ping()
-        elif db_type == "mongodb":
+        if db_type == "mongodb":
             self.client = MongoClient(os.getenv("MONGODB_URI"))
             self.ping()
+
         elif db_type == "chromadb":
             self.client = HttpClient(
                 host="localhost", 
-                port=8123
+                port=8000
             )
             self.ping()
+
         elif db_type == "qdrant":
             self.client = QdrantClient(
                 url=os.getenv("QDRANT_URL"),
@@ -57,7 +45,7 @@ class VectorDatabase:
                     self.client.create_collection(
                         collection_name=collection_name,
                         vectors_config=qdrant_models.VectorParams(
-                            size=1536,  # Size of text-embedding-3-small embeddings
+                            size=1536,
                             distance=qdrant_models.Distance.COSINE
                         )
                     )
@@ -115,28 +103,8 @@ class VectorDatabase:
     def ping(self):
         """Check if the database is alive and responsive"""
         try:
-            if self.db_type == "supabase":
-                # For Supabase 2.x
-                try:
-                    # Intentionally query a non-existent table
-                    # This will fail, but the type of error tells us if connection works
-                    response = self.client.from_("nonexistent_table_for_health_check").select("*").limit(1).execute()
-                    # If we somehow get here, connection works
-                    print("Supabase connection successful")
-                    return True, "Supabase connection successful"
-                except Exception as e:
-                    # Check the error message
-                    error_msg = str(e)
-                    # If we get a "table doesn't exist" error, that means our connection works!
-                    if "42P01" in error_msg or "does not exist" in error_msg:
-                        print("Supabase connection successful (verified via error response)")
-                        return True, "Supabase connection successful (verified via error response)"
-                    else:
-                        # Any other error means the connection likely failed
-                        print(f"Supabase connection failed: {error_msg}")
-                        return False, f"Supabase connection failed: {error_msg}"
             
-            elif self.db_type == "mongodb":
+            if self.db_type == "mongodb":
                 # MongoDB has a command_cursor ping
                 result = self.client.admin.command('ping')
                 if result.get('ok') == 1.0:

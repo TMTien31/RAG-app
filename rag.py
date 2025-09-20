@@ -14,10 +14,10 @@ def main():
 
     print("Initializing Embeddings...")
     embeddings = Embeddings(
-        model_name="text-embedding-3-small",
-        type="openai"
+        model_name="gemini-embedding-001",
+        type="gemini"
     )
-
+    
     print("Processing Data...")
     data_processor.process_data()
     
