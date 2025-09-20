@@ -17,7 +17,7 @@ class Embeddings:
             self.client = SentenceTransformer(model_name)
         elif type == "gemini":
             self.client = genai.Client(
-                api_key=os.getenv("GEMINI_API_KEY")
+                api_key=os.getenv("GEMINI_API")
             )
 
     def encode(self, doc):
@@ -33,3 +33,6 @@ class Embeddings:
                 model=self.model_name,
                 contents=doc
             ).embeddings[0].values
+        
+
+        
